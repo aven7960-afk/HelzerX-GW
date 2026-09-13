@@ -1,0 +1,12 @@
+services:
+  helzerx-giveaway:
+    build: .
+    container_name: helzerx-giveaway
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - giveaway-data:/app/data
+
+volumes:
+  giveaway-data:
