@@ -22,11 +22,10 @@ class GroqProvider:
     def groq_tools(tools: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Convert Responses-style function tools to Groq Chat Completions tools.
 
-        Groq validates the JSON schema more strictly than the Responses-style
-        representation used by the legacy agent. In particular, an object
-        schema must explicitly contain ``properties`` when ``required`` is
-        present. Normalize every object schema here so individual tools cannot
-        accidentally send an invalid schema.
+        Groq validates tool JSON schemas strictly. Object schemas must contain
+        ``properties`` when they use ``required``. For a truly argument-less
+        tool, sending ``required: []`` is rejected by some Groq validators even
+        when ``properties: {}`` is present, so the empty schema omits ``required``.
         """
         converted = []
         for tool in tools:
@@ -38,7 +37,7 @@ class GroqProvider:
                 parameters = dict(
                     function.get(
                         "parameters",
-                        {"type": "object", "properties": {}, "required": []},
+                        {"type": "object", "properties": {}},
                     )
                 )
             else:
@@ -49,18 +48,22 @@ class GroqProvider:
                 parameters = dict(
                     tool.get(
                         "parameters",
-                        {"type": "object", "properties": {}, "required": []},
+                        {"type": "object", "properties": {}},
                     )
                 )
                 function["strict"] = tool.get("strict", False)
 
             if parameters.get("type") == "object":
                 properties = parameters.setdefault("properties", {})
-                required = parameters.get("required")
-                if required is None:
-                    parameters["required"] = list(properties)
+                if properties:
+                    required = parameters.get("required")
+                    if required is None:
+                        parameters["required"] = list(properties)
+                    else:
+                        parameters["required"] = list(required)
                 else:
-                    parameters["required"] = list(required)
+                    # Groq rejects `required: []` for an argument-less object.
+                    parameters.pop("required", None)
                 parameters.setdefault("additionalProperties", False)
 
             function["parameters"] = parameters
