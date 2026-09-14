@@ -3,6 +3,7 @@ from __future__ import annotations
 from utils import now_ts
 from .context import conversation_scope
 from .memory import ConversationMemory
+from .prompts import system_prompt
 
 
 def install(agent_class):
@@ -23,6 +24,11 @@ def install(agent_class):
             await self.memory.add(key, user_id, "Helzer", answer, now_ts())
         return answer
 
+    def instructions(self, guild=None):
+        guild_name = getattr(guild, "name", None)
+        return system_prompt(self.settings.ai_timezone, guild_name)
+
     agent_class.ask = ask
+    agent_class.instructions = instructions
     agent_class.conversation_key = lambda self, message: conversation_scope(message)
     return agent_class
