@@ -59,6 +59,7 @@ class GroqProviderTests(unittest.TestCase):
             "type": "object",
             "properties": {},
             "required": [],
+            "additionalProperties": False,
         })
 
     def test_tool_result_message_uses_call_id(self):
