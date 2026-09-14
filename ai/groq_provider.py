@@ -20,22 +20,52 @@ class GroqProvider:
 
     @staticmethod
     def groq_tools(tools: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Convert Responses-style function tools to Groq Chat Completions tools.
+
+        Groq validates the JSON schema more strictly than the Responses-style
+        representation used by the legacy agent. In particular, an object
+        schema must explicitly contain ``properties`` when ``required`` is
+        present. Normalize every object schema here so individual tools cannot
+        accidentally send an invalid schema.
+        """
         converted = []
         for tool in tools:
             if tool.get("type") != "function":
                 continue
+
             if "function" in tool:
-                converted.append(tool)
-                continue
-            converted.append({
-                "type": "function",
-                "function": {
+                function = dict(tool["function"])
+                parameters = dict(
+                    function.get(
+                        "parameters",
+                        {"type": "object", "properties": {}, "required": []},
+                    )
+                )
+            else:
+                function = {
                     "name": tool["name"],
                     "description": tool.get("description", ""),
-                    "parameters": tool.get("parameters", {"type": "object", "properties": {}}),
-                    "strict": tool.get("strict", False),
-                },
-            })
+                }
+                parameters = dict(
+                    tool.get(
+                        "parameters",
+                        {"type": "object", "properties": {}, "required": []},
+                    )
+                )
+                function["strict"] = tool.get("strict", False)
+
+            if parameters.get("type") == "object":
+                properties = parameters.setdefault("properties", {})
+                required = parameters.get("required")
+                if required is None:
+                    parameters["required"] = list(properties)
+                else:
+                    parameters["required"] = list(required)
+                parameters.setdefault("additionalProperties", False)
+
+            function["parameters"] = parameters
+            converted.append({"type": "function", "function": function})
+
         return converted
 
     async def chat(self, messages: list[dict[str, Any]], tools: list[dict[str, Any]] | None = None):
