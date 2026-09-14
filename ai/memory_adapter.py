@@ -17,9 +17,10 @@ def install(agent_class):
         for role, content in previous:
             self.history[key].append((role, content))
         answer = await original_ask(self, message, prompt)
-        user_id = int(message.author.id)
-        await self.memory.add(key, user_id, "User", prompt, now_ts())
-        await self.memory.add(key, user_id, "Helzer", str(answer), now_ts())
+        if isinstance(answer, str):
+            user_id = int(message.author.id)
+            await self.memory.add(key, user_id, "User", prompt, now_ts())
+            await self.memory.add(key, user_id, "Helzer", answer, now_ts())
         return answer
 
     agent_class.ask = ask
