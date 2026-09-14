@@ -91,6 +91,7 @@ def install(agent_class):
 
     agent_class.__init__ = init
     agent_class.ask = ask
+    agent_class._dispatch_local = _dispatch_local
     agent_class.instructions = instructions
     agent_class.conversation_key = lambda self, message: conversation_scope(message)
     return agent_class
