@@ -25,6 +25,8 @@ class Settings:
     sync_guild_id: int | None
     openai_api_key: str | None
     openai_model: str
+    groq_api_key: str | None
+    groq_model: str
     ai_allowed_user_ids: tuple[int, ...]
     ai_allowed_role_ids: tuple[int, ...]
     ai_timezone: str
@@ -59,6 +61,8 @@ class Settings:
             sync_guild_id=optional_int("SYNC_GUILD_ID"),
             openai_api_key=os.getenv("OPENAI_API_KEY", "").strip() or None,
             openai_model=os.getenv("OPENAI_MODEL", "").strip() or "gpt-5.6-mini",
+            groq_api_key=os.getenv("GROQ_API_KEY", "").strip() or None,
+            groq_model=os.getenv("GROQ_MODEL", "").strip() or "openai/gpt-oss-20b",
             ai_allowed_user_ids=csv_ids("AI_ALLOWED_USER_IDS"),
             ai_allowed_role_ids=csv_ids("AI_ALLOWED_ROLE_IDS"),
             ai_timezone=os.getenv("AI_TIMEZONE", "UTC").strip() or "UTC",
