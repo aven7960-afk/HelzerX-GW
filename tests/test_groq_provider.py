@@ -44,7 +44,7 @@ class GroqProviderTests(unittest.TestCase):
         parameters = converted[0]["function"]["parameters"]
         self.assertEqual(parameters["type"], "object")
         self.assertEqual(parameters["properties"], {})
-        self.assertEqual(parameters["required"], [])
+        self.assertNotIn("required", parameters)
         self.assertFalse(parameters["additionalProperties"])
 
     def test_missing_object_schema_is_normalized(self):
@@ -58,7 +58,6 @@ class GroqProviderTests(unittest.TestCase):
         self.assertEqual(parameters, {
             "type": "object",
             "properties": {},
-            "required": [],
             "additionalProperties": False,
         })
 
