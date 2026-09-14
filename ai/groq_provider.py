@@ -18,6 +18,26 @@ class GroqProvider:
         self.model = model or DEFAULT_MODEL
         self.client = AsyncOpenAI(api_key=api_key, base_url=base_url)
 
+    @staticmethod
+    def groq_tools(tools: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        converted = []
+        for tool in tools:
+            if tool.get("type") != "function":
+                continue
+            if "function" in tool:
+                converted.append(tool)
+                continue
+            converted.append({
+                "type": "function",
+                "function": {
+                    "name": tool["name"],
+                    "description": tool.get("description", ""),
+                    "parameters": tool.get("parameters", {"type": "object", "properties": {}}),
+                    "strict": tool.get("strict", False),
+                },
+            })
+        return converted
+
     async def chat(self, messages: list[dict[str, Any]], tools: list[dict[str, Any]] | None = None):
         kwargs: dict[str, Any] = {
             "model": self.model,
@@ -26,7 +46,7 @@ class GroqProvider:
             "reasoning_effort": "low",
         }
         if tools:
-            kwargs["tools"] = tools
+            kwargs["tools"] = self.groq_tools(tools)
             kwargs["tool_choice"] = "auto"
 
         response = await self.client.chat.completions.create(**kwargs)
